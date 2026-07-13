@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Base Styles --- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-dark bg-white;
+  }
+
+  ::selection {
+    @apply bg-primary-600 text-white;
+  }
+}
+
+/* --- Component Styles --- */
+@layer components {
+  /* Scroll-triggered animation: hidden by default, revealed by IntersectionObserver */
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .animate-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Staggered animation delays for child elements */
+  .stagger-1 { transition-delay: 0.1s; }
+  .stagger-2 { transition-delay: 0.2s; }
+  .stagger-3 { transition-delay: 0.3s; }
+  .stagger-4 { transition-delay: 0.4s; }
+  .stagger-5 { transition-delay: 0.5s; }
+
+  /* Hero section floating shapes */
+  .hero-shape {
+    @apply absolute rounded-full opacity-[0.07] pointer-events-none;
+  }
+}
+
+/* --- Utility Styles --- */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
