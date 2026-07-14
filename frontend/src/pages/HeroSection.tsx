@@ -43,12 +43,12 @@ export function HeroSection() {
 
         {/* Title */}
         <p className="text-xl sm:text-2xl text-muted font-medium mb-3 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
-          CS Student & Open Source Developer
+          Software Engineer & Open Source Developer
         </p>
 
         {/* Tagline */}
         <p className="text-base text-muted/70 max-w-xl mx-auto mb-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          Final-year CS student at GIK Institute with production experience from
+          Computer Science Graduate from GIK Institute with production experience from
           Google Summer of Code and two software engineering internships.
         </p>
 

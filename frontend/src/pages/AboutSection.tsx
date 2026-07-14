@@ -32,7 +32,7 @@ export function AboutSection() {
               <span className="text-primary-600">real things</span>
             </h2>
             <p className="text-base text-muted max-w-2xl mx-auto leading-relaxed">
-              I'm a final-year Computer Science student at GIK Institute with a track record of
+              I'm a Computer Science graduate from GIK Institute with a track record of
               shipping production code. From contributing to Inkscape (3M+ users) and building
               robust C++ libraries through Google Summer of Code, to designing cloud solutions at
               Systems Limited — I bring a builder's mindset to every team I join.
