@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../config';
 
 const NAV_LINKS = [
   { label: 'About', href: '#about' },
@@ -59,7 +58,7 @@ export function Navbar() {
             </a>
           ))}
           <a
-            href={`${API_BASE}/cv`}
+            href="/Muhammad_Rafay_Irfan_CV.pdf"
             download
             className="text-sm font-medium bg-dark text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             id="nav-cv-download"
@@ -103,7 +102,7 @@ export function Navbar() {
             </a>
           ))}
           <a
-            href={`${API_BASE}/cv`}
+            href="/Muhammad_Rafay_Irfan_CV.pdf"
             download
             onClick={closeMobileMenu}
             className="block text-sm font-medium bg-dark text-white px-4 py-2 rounded-lg text-center hover:bg-gray-800 transition-colors"

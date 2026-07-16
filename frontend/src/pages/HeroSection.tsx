@@ -1,5 +1,3 @@
-import { API_BASE } from '../config';
-
 export function HeroSection() {
   return (
     <section
@@ -65,7 +63,7 @@ export function HeroSection() {
             </svg>
           </a>
           <a
-            href={`${API_BASE}/cv`}
+            href="/Muhammad_Rafay_Irfan_CV.pdf"
             download
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-dark text-sm font-semibold rounded-xl border-2 border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all hover:shadow-md hover:-translate-y-0.5"
             id="hero-cta-cv"
