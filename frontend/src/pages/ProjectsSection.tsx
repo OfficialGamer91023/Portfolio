@@ -1,10 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectCard } from '../components/ProjectCard';
 import { TagFilter } from '../components/TagFilter';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { AnimatedSection } from '../components/AnimatedSection';
+import { SectionHeader } from '../components/SectionHeader';
+import { AnimatedContent } from '../components/reactbits/AnimatedContent';
+import { BentoGrid } from '../components/reactbits/MagicBento';
+
+/**
+ * Below this many results a featured card stops spanning two columns — a lone
+ * double-width card in a three-column grid reads as a layout bug.
+ */
+const MIN_PROJECTS_FOR_WIDE_CARDS = 3;
 
 export function ProjectsSection() {
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
@@ -22,52 +30,51 @@ export function ProjectsSection() {
     return Array.from(tagSet).sort();
   }, [allProjects]);
 
+  const useWideCards = projects.length >= MIN_PROJECTS_FOR_WIDE_CARDS;
+
   return (
-    <section id="projects" className="py-24 lg:py-32 bg-gray-50/50">
-      <div className="max-w-6xl mx-auto px-6">
-        <AnimatedSection>
-          {/* Section Header */}
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">
-              Projects
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-dark mb-6">
-              Things I've <span className="text-primary-600">built</span>
-            </h2>
-            <p className="text-base text-muted max-w-xl mx-auto leading-relaxed">
-              From ML platforms to high-performance computing — a selection of projects
-              that showcase my range.
-            </p>
-          </div>
-        </AnimatedSection>
+    <section id="projects" className="relative py-24 lg:py-32">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(139,92,246,0.07),transparent_70%)]"
+        aria-hidden="true"
+      />
 
-        {/* Tag Filter */}
-        <AnimatedSection delay={0.1}>
+      <div className="relative mx-auto max-w-6xl px-6">
+        <SectionHeader
+          eyebrow="Projects"
+          title="Things I've"
+          accent="built"
+          description="From ML platforms to high-performance computing — a selection of projects that showcase my range."
+        />
+
+        <AnimatedContent delay={0.1}>
           <div className="mb-10">
-            <TagFilter
-              tags={uniqueTags}
-              selectedTag={selectedTag}
-              onSelectTag={setSelectedTag}
-            />
+            <TagFilter tags={uniqueTags} selectedTag={selectedTag} onSelectTag={setSelectedTag} />
           </div>
-        </AnimatedSection>
+        </AnimatedContent>
 
-        {/* Project Grid */}
         {loading && <LoadingSpinner message="Loading projects..." />}
         {error && <ErrorMessage message={error} />}
         {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <BentoGrid className="grid grid-cols-1 gap-5 [grid-auto-flow:dense] md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project, index) => (
-              <AnimatedSection key={project.id} delay={index * 0.08}>
-                <ProjectCard project={project} />
-              </AnimatedSection>
+              <AnimatedContent
+                key={project.id}
+                delay={index * 0.07}
+                distance={30}
+                // The wrapper has to carry the span too, otherwise it, not the
+                // card, is what the grid places.
+                className={`h-full ${useWideCards && project.featured ? 'lg:col-span-2' : ''}`}
+              >
+                <ProjectCard project={project} wide={useWideCards && project.featured} />
+              </AnimatedContent>
             ))}
             {projects.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <p className="text-muted text-sm">No projects found for this filter.</p>
+              <div className="col-span-full py-12 text-center">
+                <p className="text-sm text-muted">No projects found for this filter.</p>
               </div>
             )}
-          </div>
+          </BentoGrid>
         )}
       </div>
     </section>

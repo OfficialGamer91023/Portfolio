@@ -8,9 +8,15 @@ import { Footer } from './pages/Footer';
 
 function App() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-ink-950 text-white">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-950"
+      >
+        Skip to content
+      </a>
       <Navbar />
-      <main>
+      <main id="main">
         <HeroSection />
         <AboutSection />
         <ExperienceSection />

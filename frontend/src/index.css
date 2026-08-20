@@ -1,8 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Registered so the conic angle behind `.border-beam` can be animated.
+   Must live outside @layer to be picked up by the browser. */
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes border-spin {
+  to {
+    --border-angle: 360deg;
+  }
+}
 
 /* --- Base Styles --- */
 @layer base {
@@ -10,41 +24,160 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Anchor links land below the fixed pill nav instead of under it. */
+    scroll-padding-top: 6rem;
+    background-color: theme('colors.ink.950');
   }
 
   body {
-    @apply font-sans text-dark bg-white;
+    @apply font-sans text-white bg-ink-950;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   ::selection {
-    @apply bg-primary-600 text-white;
+    @apply bg-primary-500/40 text-white;
+  }
+
+  /* Keyboard focus is always visible, even on components that suppress the
+     default outline for their hover treatment. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-400 ring-offset-2 ring-offset-ink-950 rounded-md;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ink-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-700 rounded-full border-2 border-solid border-ink-950;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-600;
   }
 }
 
 /* --- Component Styles --- */
 @layer components {
-  /* Scroll-triggered animation: hidden by default, revealed by IntersectionObserver */
-  .animate-on-scroll {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  /* Section eyebrow label shared by every section header. */
+  .section-eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-mono font-medium uppercase tracking-[0.2em] text-primary-300;
   }
 
-  .animate-on-scroll.is-visible {
-    opacity: 1;
-    transform: translateY(0);
+  /* Standard elevated surface used by cards across the site. */
+  .surface {
+    @apply relative rounded-2xl border border-ink-700 bg-ink-850/80 backdrop-blur-sm;
   }
 
-  /* Staggered animation delays for child elements */
-  .stagger-1 { transition-delay: 0.1s; }
-  .stagger-2 { transition-delay: 0.2s; }
-  .stagger-3 { transition-delay: 0.3s; }
-  .stagger-4 { transition-delay: 0.4s; }
-  .stagger-5 { transition-delay: 0.5s; }
+  /* --- MagicBento border glow ---
+     A radial gradient painted into the card's padding box only, using the
+     mask-composite trick so it reads as a glowing border rather than a fill.
+     `--glow-*` are written by GlobalSpotlight on pointer move. */
+  .glow-card {
+    --glow-x: 50%;
+    --glow-y: 50%;
+    --glow-intensity: 0;
+    --glow-radius: 260px;
+    --glow-rgb: 96, 165, 250;
+  }
 
-  /* Hero section floating shapes */
-  .hero-shape {
-    @apply absolute rounded-full opacity-[0.07] pointer-events-none;
+  .glow-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    background: radial-gradient(
+      var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+      rgba(var(--glow-rgb), calc(var(--glow-intensity) * 0.9)) 0%,
+      rgba(var(--glow-rgb), calc(var(--glow-intensity) * 0.45)) 30%,
+      transparent 62%
+    );
+    border-radius: inherit;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+  }
+
+  /* --- BorderGlow ---
+     A conic gradient rotated around the element and masked to its border box,
+     giving an always-on "beam" travelling the edge. Used to single out the
+     current role in the experience timeline. Adapted from reactbits.dev
+     "BorderGlow", which animates the same conic mask from JS; driving the angle
+     from a registered custom property keeps it on the compositor instead.
+     Where @property is unsupported the gradient simply renders static. */
+  .border-beam::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--border-angle),
+      transparent 50%,
+      rgba(96, 165, 250, 0.9) 72%,
+      rgba(34, 211, 238, 0.95) 82%,
+      transparent 94%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: border-spin 6s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Floating particles injected by BentoCard on hover. */
+  .particle::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: rgba(var(--glow-rgb, 96, 165, 250), 0.2);
+    border-radius: 50%;
+    z-index: -1;
+  }
+
+  /* GSAP SplitText writes these classes onto the generated line/char wrappers.
+     `overflow: hidden` on the line is what makes characters rise into view. */
+  /* The bottom padding keeps the clipping edge below the baseline so
+     descenders (g, y, p) are not shaved off the finished heading. */
+  .split-parent {
+    overflow: hidden;
+    display: inline-block;
+    white-space: normal;
+    padding-bottom: 0.14em;
+    vertical-align: bottom;
+  }
+
+  /* The gradient half of a section heading, which sits inline beside a
+     `.split-parent`. Clipping makes an inline-block take its *bottom margin
+     edge* as its baseline (CSS 2.1 §10.8.1) rather than its text baseline, so
+     the two halves are measured by different rules and the accent drops ~0.2em.
+     Matching the box exactly — same line-height, same bottom padding — and
+     aligning both by their bottom edge puts them back on one baseline. */
+  .heading-accent {
+    display: inline-block;
+    padding-bottom: 0.14em;
+    vertical-align: bottom;
+  }
+
+  .split-line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.14em;
   }
 }
 
@@ -52,5 +185,45 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Fades a marquee/scroller out at both ends. */
+  .edge-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+}
+
+/* --- Print ---
+   Scroll reveals start hidden and are uncovered by ScrollTrigger as the reader
+   scrolls. Printing never scrolls, so anything below the first screen would
+   come out blank; force every reveal wrapper visible. */
+@media print {
+  .invisible,
+  .split-parent,
+  .split-line,
+  .split-word,
+  .split-char {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* --- Reduced Motion ---
+   Components also branch on the `usePrefersReducedMotion` hook so that
+   JS-driven (GSAP/canvas) animation is skipped outright. This block is the
+   backstop for anything purely declarative. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

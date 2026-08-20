@@ -7,3 +7,10 @@
  */
 
 export const API_BASE: string = import.meta.env.VITE_API_URL || '/api';
+
+/**
+ * The CV is served as a static asset from frontend/public, not through the API,
+ * so it downloads without waking the backend. Referenced from the navbar, the
+ * hero CTA and the footer.
+ */
+export const CV_DOWNLOAD_PATH: string = '/Muhammad_Rafay_Irfan_CV.pdf';

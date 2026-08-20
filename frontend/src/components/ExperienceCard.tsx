@@ -1,57 +1,80 @@
 import type { Experience } from '../types';
+import { SpotlightCard } from './reactbits/SpotlightCard';
 
 interface ExperienceCardProps {
   experience: Experience;
-  index: number;
+  /** Marks the most recent role, which gets the animated border and a badge. */
+  isCurrent: boolean;
+  /** Suppresses the connector below the final entry. */
+  isLast: boolean;
 }
 
-export function ExperienceCard({ experience, index: _index }: ExperienceCardProps) {
-  const dateRange = experience.endDate
-    ? `${experience.startDate} — ${experience.endDate}`
-    : `${experience.startDate} — Present`;
+export function ExperienceCard({ experience, isCurrent, isLast }: ExperienceCardProps) {
+  const isOngoing = experience.endDate === null;
+  const dateRange = isOngoing
+    ? `${experience.startDate} — Present`
+    : `${experience.startDate} — ${experience.endDate}`;
 
   return (
-    <div
-      className="relative pl-8 md:pl-12 pb-12 last:pb-0 group"
-      id={`experience-card-${experience.id}`}
-    >
-      {/* Timeline line */}
-      <div className="absolute left-0 md:left-4 top-2 bottom-0 w-px bg-gray-200 group-last:hidden" />
+    <div className="relative pb-10 pl-10 last:pb-0 md:pl-14" id={`experience-card-${experience.id}`}>
+      {/* Connector — fades out toward the bottom of the timeline. */}
+      {!isLast && (
+        <div
+          className="absolute left-[7px] top-3 bottom-0 w-px bg-gradient-to-b from-primary-500/50 via-ink-700 to-ink-700/20 md:left-[11px]"
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Timeline dot */}
-      <div className="absolute left-[-4px] md:left-[12px] top-2 w-2.5 h-2.5 rounded-full bg-primary-600 ring-4 ring-white" />
+      {/* Marker */}
+      <span
+        className={`absolute left-0 top-2 flex h-[15px] w-[15px] items-center justify-center rounded-full md:left-1 ${
+          isCurrent ? 'bg-primary-500/20' : 'bg-ink-800'
+        }`}
+        aria-hidden="true"
+      >
+        {isCurrent && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400/40" />}
+        <span
+          className={`relative h-[7px] w-[7px] rounded-full ${
+            isCurrent ? 'bg-primary-400 shadow-[0_0_10px_2px_rgba(96,165,250,0.6)]' : 'bg-ink-600'
+          }`}
+        />
+      </span>
 
-      {/* Card content */}
-      <div className="bg-white border border-gray-100 rounded-xl p-6 hover:border-primary-100 hover:shadow-md transition-all duration-300">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
+      <SpotlightCard className={isCurrent ? 'border-beam border-primary-500/25' : ''}>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-dark">{experience.company}</h3>
-            <p className="text-sm font-medium text-primary-600">{experience.role}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-semibold text-white">{experience.company}</h3>
+              {isCurrent && (
+                <span className="rounded-full border border-primary-400/30 bg-primary-500/10 px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-primary-300">
+                  {isOngoing ? 'Present' : 'Most recent'}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-sm font-medium text-primary-300">{experience.role}</p>
           </div>
-          <div className="text-sm text-muted text-left sm:text-right">
-            <p className="font-medium">{dateRange}</p>
-            <p>{experience.location}</p>
+          <div className="shrink-0 text-left sm:text-right">
+            <p className="font-mono text-xs tracking-tight text-white/70">{dateRange}</p>
+            <p className="mt-0.5 text-xs text-muted">{experience.location}</p>
           </div>
         </div>
 
-        {/* Bullets */}
-        <ul className="space-y-2 mt-4">
+        <ul className="space-y-2.5">
           {experience.bullets.map((bullet, bulletIndex) => (
-            <li
-              key={bulletIndex}
-              className="text-sm text-muted leading-relaxed flex gap-2"
-            >
-              <span className="text-primary-400 mt-1.5 shrink-0">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 8 8">
-                  <circle cx="4" cy="4" r="3" />
-                </svg>
-              </span>
+            <li key={bulletIndex} className="flex gap-3 text-sm leading-relaxed text-muted">
+              <svg
+                className="mt-[7px] h-1.5 w-1.5 shrink-0 text-primary-400/70"
+                fill="currentColor"
+                viewBox="0 0 8 8"
+                aria-hidden="true"
+              >
+                <circle cx="4" cy="4" r="4" />
+              </svg>
               <span>{bullet}</span>
             </li>
           ))}
         </ul>
-      </div>
+      </SpotlightCard>
     </div>
   );
 }
