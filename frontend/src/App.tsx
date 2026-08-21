@@ -3,6 +3,7 @@ import { HeroSection } from './pages/HeroSection';
 import { AboutSection } from './pages/AboutSection';
 import { ExperienceSection } from './pages/ExperienceSection';
 import { ProjectsSection } from './pages/ProjectsSection';
+import { LabSection } from './pages/LabSection';
 import { ContactSection } from './pages/ContactSection';
 import { Footer } from './pages/Footer';
 
@@ -21,6 +22,7 @@ function App() {
         <AboutSection />
         <ExperienceSection />
         <ProjectsSection />
+        <LabSection />
         <ContactSection />
       </main>
       <Footer />

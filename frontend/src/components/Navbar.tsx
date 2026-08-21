@@ -7,10 +7,11 @@ const NAV_LINKS = [
   { label: 'About', href: '#about' },
   { label: 'Experience', href: '#experience' },
   { label: 'Projects', href: '#projects' },
+  { label: 'Lab', href: '#lab' },
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-const SECTION_IDS = ['hero', 'about', 'experience', 'projects', 'contact'] as const;
+const SECTION_IDS = ['hero', 'about', 'experience', 'projects', 'lab', 'contact'] as const;
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
