@@ -1,141 +1,81 @@
-import { lazy, Suspense } from 'react';
-import { AuroraGlow } from '../components/reactbits/AuroraGlow';
-import { SplitText } from '../components/reactbits/SplitText';
-import { GradientText } from '../components/reactbits/GradientText';
-import { RotatingText } from '../components/reactbits/RotatingText';
-import { StarBorder } from '../components/reactbits/StarBorder';
-import { ShinyText } from '../components/reactbits/ShinyText';
-import { ClickSpark } from '../components/reactbits/ClickSpark';
-import { AnimatedContent } from '../components/reactbits/AnimatedContent';
-import { CV_DOWNLOAD_PATH } from '../config';
-
-// The dot grid is decorative and pulls in GSAP's InertiaPlugin, so it is split
-// out of the initial bundle and streamed in behind the aurora wash.
-const DotGrid = lazy(() =>
-  import('../components/reactbits/DotGrid').then((module) => ({ default: module.DotGrid }))
-);
+import { HERO_STATS } from '../data/heroStats';
+import { NotebookCanvas } from '../components/NotebookCanvas';
 
 /**
- * Roles the hero cycles through. The first entry completes the site's original
- * headline — "Software Engineer & Open Source Developer" — which is what renders
- * on first paint and under reduced motion.
+ * The hero renders fully on first paint — no scroll-reveal gating, no data fetch,
+ * no webfont visibility hold. This is the section that used to blank the page on a
+ * cold load; it is now pure static markup so first meaningful paint is immediate.
+ *
+ * Styling mirrors the "Verified Notebook" mockup exactly: the name is set in
+ * JetBrains Mono (not the serif), the focus values sit in filled plot chips, and
+ * the figure is a square card.
  */
-const ROLES = [
-  'Open Source Developer',
-  'Fullstack Engineer',
-  'Systems Programmer',
-  'GSoC Contributor',
-] as const;
-
 export function HeroSection() {
   return (
-    <section
-      id="hero"
-      className="relative flex min-h-screen items-center justify-center overflow-hidden pb-24 pt-32"
-    >
-      {/* Background layers. Kept at z-0 (not a negative z-index) because neither
-          the section nor the app shell establishes a stacking context, so a
-          negative layer would slide behind the shell's opaque background. */}
-      <div className="absolute inset-0 z-0">
-        <AuroraGlow intensity={0.75} />
-        <Suspense fallback={null}>
-          <DotGrid />
-        </Suspense>
-      </div>
+    <section id="hero" className="relative overflow-hidden">
+      <div className="mx-auto max-w-[940px] px-6 pb-16 pt-11">
+        <div className="grid grid-cols-1 items-center gap-9 lg:grid-cols-[1.15fr_0.85fr]">
+          {/* Left: identity */}
+          <div>
+            <p className="inline-flex items-center gap-[9px] font-mono text-xs text-verify">
+              <span
+                className="h-2 w-2 rounded-full bg-verify"
+                style={{ boxShadow: '0 0 0 4px rgba(10,125,85,.14)' }}
+              />
+              <span>
+                open_to_work = <span className="text-verify">true</span>
+              </span>
+            </p>
 
-      <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-        {/* Availability tag */}
-        <AnimatedContent distance={20} duration={0.6}>
-          <p className="inline-flex items-center gap-2 rounded-full border border-primary-400/25 bg-primary-500/10 px-4 py-1.5 text-xs font-medium tracking-wide text-primary-200 backdrop-blur-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-400" />
-            </span>
-            Open to opportunities
-          </p>
-        </AnimatedContent>
+            <h1 className="mt-[18px] font-mono font-bold leading-[1.0] tracking-[-0.03em] text-content [font-size:clamp(34px,6.4vw,60px)]">
+              Muhammad Rafay
+              <br />
+              <span className="text-plot">Irfan</span>
+            </h1>
 
-        {/* Name */}
-        <h1 className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-          <SplitText
-            tag="span"
-            text="Muhammad Rafay"
-            className="block text-white"
-            splitType="chars"
-            delay={28}
-            duration={0.9}
-            from={{ opacity: 0, y: 70, rotateX: -60 }}
-            to={{ opacity: 1, y: 0, rotateX: 0 }}
-          />
-          <GradientText className="block pb-2">Irfan</GradientText>
-        </h1>
+            <p className="mt-[18px] font-mono text-[15px] text-content-2">
+              <span className="text-verify">focus</span> = [{' '}
+              <span className="bg-plot px-1.5 py-px text-paper">systems</span> ,{' '}
+              <span className="bg-plot px-1.5 py-px text-paper">ai&nbsp;engineering</span> ]
+            </p>
 
-        {/* Role — the rotating half completes the original headline. */}
-        <AnimatedContent delay={0.35} distance={20}>
-          <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 text-lg font-medium text-white/70 sm:text-2xl">
-            <span>Software Engineer &amp;</span>
-            <RotatingText
-              texts={ROLES.map((role) => role)}
-              textClassName="font-semibold text-primary-300"
-              className="h-[1.6em]"
+            <p className="mt-[18px] max-w-[46ch] text-base leading-relaxed text-content-2">
+              I build systems that stay correct when things get messy, from error-bounded geometry
+              in C++ to LLM agents that can&apos;t act without passing a deterministic gate.
+            </p>
+
+            <dl className="mt-[26px] flex flex-wrap gap-x-[26px] gap-y-4 font-mono">
+              {HERO_STATS.map((stat) => (
+                <div key={stat.label}>
+                  <dt className="text-xs font-medium text-content-2">{stat.label}</dt>
+                  <dd className="mt-0.5 text-[22px] font-semibold tracking-[-0.02em] text-content">
+                    {stat.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          {/* Right: fig.01 — square figure */}
+          <figure
+            className="nb-card relative m-0 aspect-square overflow-hidden"
+            style={{ boxShadow: '0 18px 40px -22px rgba(26,26,23,.35)' }}
+          >
+            <NotebookCanvas
+              dots={2}
+              speed={0.012}
+              className="absolute inset-0 h-full w-full"
+              ariaLabel="Two curves crossing at two verified points"
             />
-          </p>
-        </AnimatedContent>
-
-        {/* Tagline */}
-        <AnimatedContent delay={0.45} distance={20}>
-          <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-muted">
-            Computer Science Graduate from GIK Institute with production experience from Google
-            Summer of Code and two software engineering internships.
-          </p>
-        </AnimatedContent>
-
-        {/* CTAs */}
-        <AnimatedContent delay={0.55} distance={20}>
-          <ClickSpark className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <StarBorder
-              as="a"
-              href="#projects"
-              id="hero-cta-projects"
-              className="w-full sm:w-auto"
-              innerClassName="w-full"
-            >
-              View My Work
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </StarBorder>
-
-            <a
-              href={CV_DOWNLOAD_PATH}
-              download
-              id="hero-cta-cv"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-ink-700 bg-white/[0.03] px-7 py-3.5 text-sm font-semibold backdrop-blur-sm transition-colors duration-300 hover:border-ink-600 hover:bg-white/[0.07] sm:w-auto"
-            >
-              <svg className="h-4 w-4 text-primary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <ShinyText text="Download CV" />
-            </a>
-          </ClickSpark>
-        </AnimatedContent>
+            <figcaption className="absolute right-2.5 top-2 font-mono text-[10px] text-plot">
+              fig.01 — intersection
+            </figcaption>
+            <span className="absolute bottom-2 left-2.5 font-mono text-[10px] text-content-3">
+              two curves · verified crossings
+            </span>
+          </figure>
+        </div>
       </div>
-
-      {/* Scroll indicator */}
-      <a
-        href="#about"
-        aria-label="Scroll to about section"
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full p-2 text-muted/50 transition-colors hover:text-primary-300"
-      >
-        <svg className="h-5 w-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7" />
-        </svg>
-      </a>
     </section>
   );
 }

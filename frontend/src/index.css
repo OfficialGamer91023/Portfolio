@@ -1,20 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Fonts. `display=swap` so text paints in a fallback immediately and swaps when
+   the webfont arrives — the headline is never held invisible waiting on fonts. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Caveat:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Registered so the conic angle behind `.border-beam` can be animated.
-   Must live outside @layer to be picked up by the browser. */
-@property --border-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
+/* ============================================================================
+   Theme tokens — "engineering notebook"
+   Light "paper" is the default; dark "blueprint" is the same grammar on navy.
+   Colour is driven entirely by these custom properties so a single `data-theme`
+   attribute on <html> repaints the whole page with no JS beyond the toggle.
+   The background is painted from CSS on first paint, so there is never a black
+   (or blank) void while the bundle loads.
+   ========================================================================== */
+:root {
+  --paper: #faf9f4;
+  --paper-2: #f4f2e9;
+  --grid: #e7e4d6;
+  --grid-bold: #dcd8c8;
+  --ink: #1a1a17;
+  --ink-2: #54544a;
+  --ink-3: #8a8a7a;
+  --plot: #c2410c;
+  --verify: #0a7d55;
+  --blue: #3155b8;
+  --edge: #e2dfd2;
+  --card: #fffdf7;
+  /* chess board + pieces */
+  --sq-lite: #f1eedf;
+  --sq-dark: #c9bd9e;
+  --pc-w: #2a2622;
+  --pc-b: #111111;
+  --pc-wsh: #ffffff;
+  /* rgb triplets for canvas / rgba() composition */
+  --cv-grid: 220, 216, 200;
+  --cv-bg: 255, 253, 247;
+  color-scheme: light;
 }
 
-@keyframes border-spin {
-  to {
-    --border-angle: 360deg;
+/* Explicit dark choice wins in both directions. */
+:root[data-theme='dark'] {
+  --paper: #0a111f;
+  --paper-2: #101c30;
+  --grid: #152541;
+  --grid-bold: #1f3457;
+  --ink: #e4ecf9;
+  --ink-2: #9fb0cc;
+  --ink-3: #647697;
+  --plot: #f2854e;
+  --verify: #37c98d;
+  --blue: #6ea8ff;
+  --edge: #1c3052;
+  --card: #0e1a2d;
+  --sq-lite: #24344f;
+  --sq-dark: #16233a;
+  --pc-w: #eaf1ff;
+  --pc-b: #0a0f18;
+  --pc-wsh: transparent;
+  --cv-grid: 30, 52, 84;
+  --cv-bg: 14, 26, 45;
+  color-scheme: dark;
+}
+
+/* System preference, only when the user has not made an explicit choice. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #0a111f;
+    --paper-2: #101c30;
+    --grid: #152541;
+    --grid-bold: #1f3457;
+    --ink: #e4ecf9;
+    --ink-2: #9fb0cc;
+    --ink-3: #647697;
+    --plot: #f2854e;
+    --verify: #37c98d;
+    --blue: #6ea8ff;
+    --edge: #1c3052;
+    --card: #0e1a2d;
+    --sq-lite: #24344f;
+    --sq-dark: #16233a;
+    --pc-w: #eaf1ff;
+    --pc-b: #0a0f18;
+    --pc-wsh: transparent;
+    --cv-grid: 30, 52, 84;
+    --cv-bg: 14, 26, 45;
+    color-scheme: dark;
   }
 }
 
@@ -24,201 +95,155 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Anchor links land below the fixed pill nav instead of under it. */
-    scroll-padding-top: 6rem;
-    background-color: theme('colors.ink.950');
+    /* Anchor links land below the fixed top bar instead of under it. */
+    scroll-padding-top: 5rem;
+    background-color: var(--paper);
   }
 
   body {
-    @apply font-sans text-white bg-ink-950;
+    @apply font-sans;
+    background-color: var(--paper);
+    color: var(--ink);
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /* Faint engineering-grid wash behind the whole page (matches the mockup:
+       solid --grid lines at 28px). */
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 
   ::selection {
-    @apply bg-primary-500/40 text-white;
+    background: var(--plot);
+    color: var(--card);
   }
 
-  /* Keyboard focus is always visible, even on components that suppress the
-     default outline for their hover treatment. */
+  /* Keyboard focus is always visible. */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary-400 ring-offset-2 ring-offset-ink-950 rounded-md;
+    @apply outline-none;
+    box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--plot);
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar {
     width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-ink-950;
+    background: var(--paper);
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-ink-700 rounded-full border-2 border-solid border-ink-950;
+    background: var(--grid-bold);
+    border-radius: 5px;
+    border: 2px solid var(--paper);
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-ink-600;
+    background: var(--ink-3);
   }
 }
 
 /* --- Component Styles --- */
 @layer components {
-  /* Section eyebrow label shared by every section header. */
-  .section-eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-mono font-medium uppercase tracking-[0.2em] text-primary-300;
+  /* Floating section index ("§ 01"), pinned top-right of each section, matching
+     the mockup's `.idx`. */
+  .section-idx {
+    @apply absolute font-mono text-xs;
+    top: 20px;
+    right: 24px;
+    color: var(--ink-3);
   }
 
-  /* Standard elevated surface used by cards across the site. */
-  .surface {
-    @apply relative rounded-2xl border border-ink-700 bg-ink-850/80 backdrop-blur-sm;
+  /* Uppercase mono eyebrow above a heading (mockup `.lbl`). */
+  .section-lbl {
+    @apply font-mono font-semibold uppercase;
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    color: var(--ink-2);
+  }
+  .section-lbl.plot {
+    color: var(--plot);
   }
 
-  /* --- MagicBento border glow ---
-     A radial gradient painted into the card's padding box only, using the
-     mask-composite trick so it reads as a glowing border rather than a fill.
-     `--glow-*` are written by GlobalSpotlight on pointer move. */
-  .glow-card {
-    --glow-x: 50%;
-    --glow-y: 50%;
-    --glow-intensity: 0;
-    --glow-radius: 260px;
-    --glow-rgb: 96, 165, 250;
+  /* Serif section heading (mockup `.work h2`, `.play-head`). */
+  .nb-h2 {
+    @apply font-serif font-semibold tracking-[-0.01em] text-content;
+    font-size: 26px;
   }
 
-  .glow-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1.5px;
-    background: radial-gradient(
-      var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-      rgba(var(--glow-rgb), calc(var(--glow-intensity) * 0.9)) 0%,
-      rgba(var(--glow-rgb), calc(var(--glow-intensity) * 0.45)) 30%,
-      transparent 62%
-    );
-    border-radius: inherit;
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 1;
+  /* Standard notebook card surface. */
+  .nb-card {
+    background: var(--card);
+    border: 1px solid var(--edge);
+    border-radius: 8px;
   }
 
-  /* --- BorderGlow ---
-     A conic gradient rotated around the element and masked to its border box,
-     giving an always-on "beam" travelling the edge. Used to single out the
-     current role in the experience timeline. Adapted from reactbits.dev
-     "BorderGlow", which animates the same conic mask from JS; driving the angle
-     from a registered custom property keeps it on the compositor instead.
-     Where @property is unsupported the gradient simply renders static. */
-  .border-beam::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1.5px;
-    border-radius: inherit;
-    background: conic-gradient(
-      from var(--border-angle),
-      transparent 50%,
-      rgba(96, 165, 250, 0.9) 72%,
-      rgba(34, 211, 238, 0.95) 82%,
-      transparent 94%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    animation: border-spin 6s linear infinite;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* Floating particles injected by BentoCard on hover. */
-  .particle::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: rgba(var(--glow-rgb, 96, 165, 250), 0.2);
-    border-radius: 50%;
-    z-index: -1;
-  }
-
-  /* GSAP SplitText writes these classes onto the generated line/char wrappers.
-     `overflow: hidden` on the line is what makes characters rise into view. */
-  /* The bottom padding keeps the clipping edge below the baseline so
-     descenders (g, y, p) are not shaved off the finished heading. */
-  .split-parent {
-    overflow: hidden;
-    display: inline-block;
-    white-space: normal;
-    padding-bottom: 0.14em;
-    vertical-align: bottom;
-  }
-
-  /* The gradient half of a section heading, which sits inline beside a
-     `.split-parent`. Clipping makes an inline-block take its *bottom margin
-     edge* as its baseline (CSS 2.1 §10.8.1) rather than its text baseline, so
-     the two halves are measured by different rules and the accent drops ~0.2em.
-     Matching the box exactly — same line-height, same bottom padding — and
-     aligning both by their bottom edge puts them back on one baseline. */
-  .heading-accent {
-    display: inline-block;
-    padding-bottom: 0.14em;
-    vertical-align: bottom;
-  }
-
-  .split-line {
-    display: block;
-    overflow: hidden;
-    padding-bottom: 0.14em;
+  /* Page surface: paper ground + the engineering-grid wash. Lives on the app
+     wrapper (not just <body>) because the wrapper is an opaque paper layer that
+     would otherwise cover the body's grid. Cards paint their own solid surface
+     on top, so the grid only shows in the gaps. */
+  .page-surface {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 
-/* --- Utility Styles --- */
+/* --- Reveal ---
+   Reveal wrappers are VISIBLE by default (opacity:1). The entrance transition is
+   layered on only after JS marks the element as ready and observes it into view.
+   If JS never runs, or is still loading, content is fully readable — this is the
+   fix for the "black page, then pop-in" first-paint bug. */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Fades a marquee/scroller out at both ends. */
-  .edge-fade {
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  /* `is-armed` is set by JS once the observer is wired; only then may we hide. */
+  .reveal.is-armed {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-armed.is-in {
+    opacity: 1;
+    transform: none;
   }
 }
 
-/* --- Print ---
-   Scroll reveals start hidden and are uncovered by ScrollTrigger as the reader
-   scrolls. Printing never scrolls, so anything below the first screen would
-   come out blank; force every reveal wrapper visible. */
+/* --- Print: force every reveal visible (printing never scrolls). --- */
 @media print {
-  .invisible,
-  .split-parent,
-  .split-line,
-  .split-word,
-  .split-char {
-    visibility: visible !important;
+  .reveal,
+  .reveal.is-armed {
     opacity: 1 !important;
     transform: none !important;
+  }
+  body {
+    background-image: none;
   }
 }
 
 /* --- Reduced Motion ---
-   Components also branch on the `usePrefersReducedMotion` hook so that
-   JS-driven (GSAP/canvas) animation is skipped outright. This block is the
-   backstop for anything purely declarative. */
+   Components also branch on the `usePrefersReducedMotion` hook so JS-driven
+   (GSAP/canvas) animation is skipped outright. This is the declarative backstop:
+   reveals never arm, so content is simply present. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-
+  .reveal.is-armed {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
   *,
   *::before,
   *::after {
