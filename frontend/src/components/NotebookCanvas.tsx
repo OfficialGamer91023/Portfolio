@@ -44,12 +44,26 @@ export function NotebookCanvas({
     let t = phase0;
 
     function palette(): { grid: string; plot: string; blue: string; verify: string } {
-      const cs = getComputedStyle(document.documentElement);
+      const root = document.documentElement;
+      const cs = getComputedStyle(root);
+      // The external stylesheet can apply a beat after this canvas first paints
+      // in a production build, so getPropertyValue may briefly return "". An
+      // empty string leaves the canvas strokeStyle at its default black, which
+      // is the "black scribble" bug. Fall back to the token's literal value for
+      // the active theme so the curves are never black; the fallbacks equal the
+      // real tokens, so there is no visible change once the vars resolve.
+      const dark =
+        root.dataset.theme === 'dark' ||
+        (root.dataset.theme !== 'light' &&
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const v = (name: string, fallback: string): string =>
+        cs.getPropertyValue(name).trim() || fallback;
       return {
-        grid: `rgba(${cs.getPropertyValue('--cv-grid').trim()}, 0.7)`,
-        plot: cs.getPropertyValue('--plot').trim(),
-        blue: cs.getPropertyValue('--blue').trim(),
-        verify: cs.getPropertyValue('--verify').trim(),
+        grid: `rgba(${v('--cv-grid', dark ? '30, 52, 84' : '220, 216, 200')}, 0.7)`,
+        plot: v('--plot', dark ? '#f2854e' : '#c2410c'),
+        blue: v('--blue', dark ? '#6ea8ff' : '#3155b8'),
+        verify: v('--verify', dark ? '#37c98d' : '#0a7d55'),
       };
     }
     let pal = palette();
