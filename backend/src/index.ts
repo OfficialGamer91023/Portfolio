@@ -6,6 +6,8 @@ import experienceRoutes from './routes/experience';
 import skillRoutes from './routes/skills';
 import contactRoutes from './routes/contact';
 import cvRoutes from './routes/cv';
+import contributionRoutes from './routes/contributions';
+import runRoutes from './routes/runs';
 import { requestLogger } from './middleware/logger';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -33,6 +35,8 @@ app.use('/api/experience', experienceRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/cv', cvRoutes);
+app.use('/api/contributions', contributionRoutes);
+app.use('/api/runs', runRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

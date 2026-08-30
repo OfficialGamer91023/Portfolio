@@ -1,191 +1,104 @@
-import { useMemo, useState } from 'react';
-import { SectionHeader } from '../components/SectionHeader';
-import { AnimatedContent } from '../components/reactbits/AnimatedContent';
-import { WindowFrame } from '../components/WindowFrame';
+import { useEffect, useState } from 'react';
+import { Reveal } from '../components/Reveal';
+import { NotebookCanvas } from '../components/NotebookCanvas';
 import { CurveIntersectionToy } from '../components/toys/CurveIntersectionToy';
-import { curveIntersections, flatten } from '../lib/geom/curveIntersection';
-import { DEFAULT_PRESET } from '../components/toys/curvePresets';
 
-/** Aspect the preview keeps, whatever the framed geometry happens to be. */
-const PREVIEW_ASPECT = 640 / 400;
-const PREVIEW_PADDING = 0.12;
-
-/** What the visitor is actually looking at, once the window is open. */
-const HIGHLIGHTS = [
-  'Bounds come from the convex hull of each control polygon, rounded outward by a proven bound on accumulated rounding error.',
-  'Disjoint bounds retire a whole subtree, so the search cost tracks the number of real crossings rather than the recursion depth.',
-  'Tangencies, where the curves touch without crossing, survive. That is the case naive sign tests drop.',
-];
-
+/**
+ * The Lab makes the lib2geom intersection math playable. Inline, it shows a small
+ * live figure of two curves crossing (the same decorative canvas as the hero);
+ * clicking it opens the real, error-bounded solver from the GSoC work in a modal,
+ * where every crossing is computed, not drawn. Keeping the heavy interactive toy
+ * behind a click means it only mounts when asked for, so it never weighs on the
+ * scroll or first paint.
+ */
 export function LabSection() {
-  const [toyOpen, setToyOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
+
+  // Lock body scroll and wire Escape-to-close only while the modal is open.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <section id="lab" className="relative py-24 lg:py-32">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(34,211,238,0.06),transparent_70%)]"
-        aria-hidden="true"
-      />
+    <section id="lab" className="relative border-t border-grid-bold">
+      <div className="mx-auto max-w-[940px] px-6 py-11">
+        <span className="section-idx">§ 02</span>
+        <Reveal>
+          <span className="section-lbl">the lab</span>
+          <h2 className="nb-h2 mt-1.5">Where the geometry becomes playable</h2>
+          <p className="mt-1.5 font-mono text-sm text-content-3">
+            the same intersection math from lib2geom, but you drive it
+          </p>
+        </Reveal>
 
-      <div className="relative mx-auto max-w-6xl px-6">
-        <SectionHeader
-          eyebrow="Lab"
-          title="Code you can"
-          accent="run right here"
-          description="My Google Summer of Code work replaced fragile floating-point logic in lib2geom, the geometry library behind Inkscape, with error-bounded interval arithmetic."
-          descriptionClassName="max-w-2xl"
-        />
-
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
-          <AnimatedContent direction="horizontal" reverse distance={30}>
-            <ul className="space-y-4">
-              {HIGHLIGHTS.map((highlight) => (
-                <li key={highlight} className="flex gap-3 text-sm leading-relaxed text-muted">
-                  <span
-                    className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                    aria-hidden="true"
-                  />
-                  {highlight}
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-6 text-sm leading-relaxed text-muted">
-              The desktop original is{' '}
-              <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-xs text-primary-300">
-                general-curve-intersection-toy
-              </code>
-              , a C++ toy I wrote to debug the algorithm as I built it.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setToyOpen(true)}
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink-950 transition-colors duration-300 hover:bg-primary-300"
-            >
-              Open the toy
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true">
-                <path d="M6 3h7v7M13 3L4 12" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </AnimatedContent>
-
-          <AnimatedContent direction="horizontal" distance={30} delay={0.1}>
-            <LaunchCard onLaunch={() => setToyOpen(true)} />
-          </AnimatedContent>
-        </div>
+        <Reveal className="mt-2" delay={0.05}>
+          {/* Clickable live preview (mockup `.labfig`) — opens the real solver. */}
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-haspopup="dialog"
+            className="nb-card group relative block h-[280px] w-full overflow-hidden text-left transition-colors hover:border-plot/60 focus-visible:border-plot/60"
+          >
+            <NotebookCanvas
+              className="absolute inset-0 h-full w-full"
+              ariaLabel="Live preview of two curves crossing — click to open the interactive solver"
+            />
+            <span className="absolute right-3.5 top-2.5 font-mono text-[10px] text-plot">
+              ▲ click to open · drag the curves
+            </span>
+            <span className="absolute bottom-2.5 left-3.5 font-mono text-[11px] text-content-3">
+              fig.05 — curve intersection toy · live
+            </span>
+          </button>
+        </Reveal>
       </div>
 
-      <WindowFrame
-        open={toyOpen}
-        onClose={() => setToyOpen(false)}
-        title="general-curve-intersection-toy"
-      >
-        <CurveIntersectionToy />
-      </WindowFrame>
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Curve intersection solver"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+        >
+          {/* Backdrop */}
+          <button
+            type="button"
+            aria-label="Close solver"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
+          />
+
+          {/* Panel — medium size, not full-bleed. */}
+          <div className="nb-card relative flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center gap-2 border-b border-grid px-4 py-2.5">
+              <span className="font-mono text-[11px] text-plot">fig.05</span>
+              <span className="font-mono text-[11px] text-content-3">
+                curve intersection toy · live
+              </span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="ml-auto rounded border border-edge px-2 py-1 font-mono text-[11px] text-content-3 transition-colors hover:border-plot hover:text-plot"
+              >
+                esc ✕
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <CurveIntersectionToy />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
-}
-
-/**
- * A still of the toy dressed as a window, acting as the launcher. The preview is
- * drawn from the same solver the window runs, so the crossings it marks are real
- * rather than decorative.
- */
-function LaunchCard({ onLaunch }: { onLaunch: () => void }) {
-  const preview = useMemo(() => {
-    const [curveA, curveB] = DEFAULT_PRESET.curves;
-    const polylineA = flatten(curveA, 160);
-    const polylineB = flatten(curveB, 160);
-
-    return {
-      pathA: toPath(polylineA),
-      pathB: toPath(polylineB),
-      points: curveIntersections(curveA, curveB).intersections.map((hit) => hit.point),
-      // Framed on the curves rather than on the control polygons: the control
-      // points sit well outside the shape here, and framing on them would leave
-      // the drawing marooned in the middle of a mostly empty card.
-      viewBox: frameOf([...polylineA, ...polylineB]),
-    };
-  }, []);
-
-  return (
-    <button
-      type="button"
-      onClick={onLaunch}
-      className="group block w-full overflow-hidden rounded-xl border border-ink-700 bg-ink-850 text-left shadow-xl shadow-black/40 transition-colors duration-300 hover:border-primary-400/40"
-    >
-      <span className="flex items-center gap-3 border-b border-ink-700 bg-ink-850 px-4 py-3">
-        <span className="flex items-center gap-2" aria-hidden="true">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-center font-mono text-[11px] text-muted">
-          general-curve-intersection-toy
-        </span>
-      </span>
-
-      <span className="relative block bg-ink-950">
-        <svg
-          viewBox={preview.viewBox}
-          className="block w-full"
-          role="img"
-          aria-label="Two Bézier curves crossing at six marked points"
-        >
-          <path d={preview.pathA} fill="none" stroke="#60a5fa" strokeWidth={1.6} />
-          <path d={preview.pathB} fill="none" stroke="#a78bfa" strokeWidth={1.6} />
-          {preview.points.map((point, index) => (
-            <circle
-              key={index}
-              cx={point.x}
-              cy={point.y}
-              r={3.2}
-              fill="#22d3ee"
-              stroke="#ffffff"
-              strokeWidth={1}
-            />
-          ))}
-        </svg>
-
-        <span className="absolute inset-0 flex items-center justify-center bg-ink-950/70 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
-          <span className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white">
-            Launch
-          </span>
-        </span>
-      </span>
-    </button>
-  );
-}
-
-/**
- * Smallest box containing every point, padded and then widened or heightened to
- * the card's aspect ratio so the drawing is centred rather than stretched.
- */
-function frameOf(points: Array<{ x: number; y: number }>): string {
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  const padding = Math.max(maxX - minX, maxY - minY) * PREVIEW_PADDING;
-  let width = maxX - minX + padding * 2;
-  let height = maxY - minY + padding * 2;
-
-  if (width / height < PREVIEW_ASPECT) {
-    width = height * PREVIEW_ASPECT;
-  } else {
-    height = width / PREVIEW_ASPECT;
-  }
-
-  const x = (minX + maxX) / 2 - width / 2;
-  const y = (minY + maxY) / 2 - height / 2;
-  return `${x} ${y} ${width} ${height}`;
-}
-
-function toPath(points: Array<{ x: number; y: number }>): string {
-  return points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
 }

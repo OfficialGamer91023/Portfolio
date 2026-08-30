@@ -4,16 +4,36 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Paints the canvas dark before the stylesheet lands, so the page never
-         flashes white on first load. -->
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#07070b" />
-    <style>
-      html { background-color: #07070b; }
-    </style>
-    <meta name="description" content="Muhammad Rafay Irfan — CS Student & Open Source Developer. Portfolio showcasing fullstack projects, Google Summer of Code contributions, and software engineering experience." />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Apply the stored / OS theme before first paint so there is no flash of
+         the wrong palette, and paint the correct background immediately so the
+         page never shows a blank or black void while the bundle loads. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('nb-theme');
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : (window.matchMedia &&
+                  window.matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+          }
+          document.documentElement.style.backgroundColor =
+            theme === 'dark' ? '#0a111f' : '#faf9f4';
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="theme-color" content="#faf9f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a111f" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Muhammad Rafay Irfan — Systems & AI engineer. Error-bounded geometry, verified LLM agents, and open-source work used by millions." />
     <meta name="author" content="Muhammad Rafay Irfan" />
-    <meta name="keywords" content="Muhammad Rafay Irfan, portfolio, software engineer, fullstack developer, React, TypeScript, Node.js, Google Summer of Code" />
+    <meta name="keywords" content="Muhammad Rafay Irfan, portfolio, systems engineer, AI engineer, C++, lib2geom, Google Summer of Code, open source" />
     <title>Muhammad Rafay Irfan — Portfolio</title>
   </head>
   <body>

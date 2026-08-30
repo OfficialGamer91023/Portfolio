@@ -10,6 +10,34 @@ export interface ProjectResponse {
   featured: boolean;
   order: number;
   createdAt: Date;
+  problem: string | null;
+  method: string | null;
+  verified: string | null;
+  subtitle: string | null;
+  figNo: string | null;
+}
+
+export interface ContributionResponse {
+  id: number;
+  project: string;
+  detail: string;
+  status: string;
+  statusKind: string;
+  url: string | null;
+  order: number;
+}
+
+export interface RunResponse {
+  id: number;
+  date: string;
+  km: number;
+  pace: number;
+  dur: number;
+  speed: number;
+  hr: number | null;
+  elev: number | null;
+  cal: number | null;
+  note: string | null;
 }
 
 export interface ExperienceResponse {

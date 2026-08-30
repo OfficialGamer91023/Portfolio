@@ -21,6 +21,38 @@ model Project {
   featured    Boolean  @default(false)
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+
+  // --- "Verified notebook" case layout: problem -> method -> verified ---
+  problem  String? // the failure or risk the work addressed
+  method   String? // how it was solved
+  verified String? // the proof it holds (test suite, invariant, audit trail)
+  subtitle String? // meta line under the title (stack / context / accolade)
+  figNo    String? // e.g. "fig.02" — the notebook figure number
+}
+
+/// One row of the open-source ledger under the work section.
+model OpenSourceContribution {
+  id         Int     @id @default(autoincrement())
+  project    String // e.g. "HAMi (CNCF)", "lib2geom"
+  detail     String // what the contribution was
+  status     String // e.g. "merged", "3M+ users", "open ↗"
+  statusKind String  @default("verify") // "verify" (green) | "plot" (orange, in-progress)
+  url        String?
+  order      Int     @default(0)
+}
+
+/// A single logged run, aggregated per day (source: Samsung Health export).
+model Run {
+  id      Int     @id @default(autoincrement())
+  date    String  @unique // ISO yyyy-mm-dd
+  km      Float
+  pace    Float // minutes per km
+  dur     Float // moving minutes
+  speed   Float // km/h
+  hr      Int? // avg bpm, null when the phone did not record it
+  elev    Int? // metres of gain, null/0 when unrecorded
+  cal     Int?
+  note    String?
 }
 
 model Experience {

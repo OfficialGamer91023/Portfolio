@@ -16,14 +16,24 @@ const RECORD_DEPTH = 7;
 const MIN_DEGREE = 1;
 const MAX_DEGREE = 5;
 
+// Curve colours are fixed hexes chosen to read on both the paper and blueprint
+// grounds; the canvas background and grid are read from the theme CSS variables
+// at draw time (see `draw`), so the figure repaints correctly when the theme flips.
 const COLORS = {
-  curveA: '#60a5fa',
-  curveB: '#a78bfa',
-  intersection: '#22d3ee',
-  grid: 'rgba(255, 255, 255, 0.045)',
-  box: 'rgba(34, 211, 238, 0.16)',
-  background: '#0b0b12',
+  curveA: '#3b6fd4',
+  curveB: '#d2691e',
+  intersection: '#0a9d6a',
+  box: 'rgba(10, 157, 106, 0.28)',
 } as const;
+
+/** Reads the current theme's canvas background and grid colour from CSS vars. */
+function readCanvasTheme(): { bg: string; grid: string } {
+  const cs = getComputedStyle(document.documentElement);
+  return {
+    bg: cs.getPropertyValue('--card').trim() || '#fffdf7',
+    grid: `rgba(${cs.getPropertyValue('--cv-grid').trim() || '220, 216, 200'}, 0.6)`,
+  };
+}
 
 const DEGREE_NAMES: Record<number, string> = {
   1: 'line',
@@ -92,11 +102,12 @@ export function CurveIntersectionToy() {
       0,
     );
     const unit = LOGICAL_WIDTH / cssWidth;
+    const canvasTheme = readCanvasTheme();
 
-    context.fillStyle = COLORS.background;
+    context.fillStyle = canvasTheme.bg;
     context.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
-    drawGrid(context, unit);
+    drawGrid(context, unit, canvasTheme.grid);
 
     if (showSubdivision) {
       context.strokeStyle = COLORS.box;
@@ -116,12 +127,19 @@ export function CurveIntersectionToy() {
     drawCurve(context, curves[1], COLORS.curveB, unit);
 
     for (const intersection of result.intersections) {
-      drawIntersection(context, intersection.point, unit);
+      drawIntersection(context, intersection.point, unit, canvasTheme.bg);
     }
   }, [curves, result, showPolygons, showSubdivision]);
 
   useEffect(() => {
     draw();
+  }, [draw]);
+
+  // Repaint when the theme flips (data-theme changes on <html>).
+  useEffect(() => {
+    const observer = new MutationObserver(() => draw());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
   }, [draw]);
 
   useEffect(() => {
@@ -246,7 +264,7 @@ export function CurveIntersectionToy() {
       <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <div
           ref={surfaceRef}
-          className="relative w-full overflow-hidden rounded-lg border border-ink-700 bg-ink-950"
+          className="relative w-full overflow-hidden rounded-lg border border-edge bg-card"
           style={{ aspectRatio: `${LOGICAL_WIDTH} / ${LOGICAL_HEIGHT}` }}
         >
           <canvas ref={canvasRef} className="block h-full w-full" aria-hidden="true" />
@@ -277,14 +295,14 @@ export function CurveIntersectionToy() {
           )}
         </div>
 
-        <p className="text-xs text-muted">
+        <p className="text-xs text-content-3">
           Drag any control point, or tab to one and nudge it with the arrow keys.
           {activePreset ? ` ${activePreset.note}` : ''}
         </p>
       </div>
 
       {/* --- readout ---------------------------------------------------- */}
-      <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-ink-700 bg-ink-850/50 p-4 font-mono text-xs lg:w-80 lg:border-l lg:border-t-0">
+      <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-edge bg-paper-2 p-4 font-mono text-xs lg:w-80 lg:border-l lg:border-t-0">
         <Readout
           result={result}
           epsilon={epsilon}
@@ -293,7 +311,7 @@ export function CurveIntersectionToy() {
           onEpsilonChange={setEpsilonExponent}
         />
 
-        <div className="space-y-2 border-t border-ink-700 pt-4">
+        <div className="space-y-2 border-t border-edge pt-4">
           <ToggleRow label="Control polygons" checked={showPolygons} onChange={setShowPolygons} />
           <ToggleRow
             label="Subdivision bounds"
@@ -302,13 +320,13 @@ export function CurveIntersectionToy() {
           />
         </div>
 
-        <div className="space-y-2 border-t border-ink-700 pt-4">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Degree</p>
+        <div className="space-y-2 border-t border-edge pt-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-content-3">Degree</p>
           {curves.map((points, index) => (
             <div key={index} className="flex items-center justify-between gap-2">
               <span style={{ color: index === 0 ? COLORS.curveA : COLORS.curveB }}>
                 Curve {index + 1}
-                <span className="ml-2 text-muted">{DEGREE_NAMES[points.length - 1]}</span>
+                <span className="ml-2 text-content-3">{DEGREE_NAMES[points.length - 1]}</span>
               </span>
               <span className="flex gap-1">
                 <StepButton
@@ -328,8 +346,8 @@ export function CurveIntersectionToy() {
           ))}
         </div>
 
-        <div className="space-y-2 border-t border-ink-700 pt-4">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Presets</p>
+        <div className="space-y-2 border-t border-edge pt-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-content-3">Presets</p>
           <div className="flex flex-wrap gap-1.5">
             {CURVE_PRESETS.map((preset) => (
               <button
@@ -338,8 +356,8 @@ export function CurveIntersectionToy() {
                 onClick={() => applyPreset(preset.id)}
                 className={`rounded border px-2 py-1 text-[11px] transition-colors ${
                   presetId === preset.id
-                    ? 'border-primary-400/50 bg-primary-500/15 text-primary-300'
-                    : 'border-ink-700 text-muted hover:border-ink-600 hover:text-white'
+                    ? 'border-plot/50 bg-plot/10 text-plot'
+                    : 'border-edge text-content-3 hover:border-content-3 hover:text-content'
                 }`}
               >
                 {preset.label}
@@ -348,7 +366,7 @@ export function CurveIntersectionToy() {
             <button
               type="button"
               onClick={randomise}
-              className="rounded border border-ink-700 px-2 py-1 text-[11px] text-muted transition-colors hover:border-ink-600 hover:text-white"
+              className="rounded border border-edge px-2 py-1 text-[11px] text-content-3 transition-colors hover:border-content-3 hover:text-content"
             >
               Random
             </button>
@@ -376,7 +394,7 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
     <div className="space-y-4">
       <div>
         <div className="flex items-baseline justify-between">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-muted">Intersections</span>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-content-3">Intersections</span>
           <span className="text-lg font-semibold" style={{ color: COLORS.intersection }}>
             {intersections.length}
             {stats.truncated ? '+' : ''}
@@ -391,9 +409,9 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
       </div>
 
       <label className="block">
-        <span className="flex items-baseline justify-between text-[10px] uppercase tracking-[0.18em] text-muted">
+        <span className="flex items-baseline justify-between text-[10px] uppercase tracking-[0.18em] text-content-3">
           Epsilon
-          <span className="text-primary-300">{formatExponential(epsilon)}</span>
+          <span className="text-plot">{formatExponential(epsilon)}</span>
         </span>
         <input
           type="range"
@@ -402,7 +420,7 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
           step={1}
           value={epsilonExponent}
           onChange={(event) => onEpsilonChange(Number(event.target.value))}
-          className="mt-2 w-full accent-primary-400"
+          className="mt-2 w-full accent-plot"
         />
       </label>
 
@@ -414,14 +432,14 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
         <StatRow label="Solve time" value={`${stats.elapsedMs.toFixed(2)} ms`} />
       </dl>
 
-      <div className="space-y-3 border-t border-ink-700 pt-4">
+      <div className="space-y-3 border-t border-edge pt-4">
         {curves.map((points, index) => (
           <div key={index}>
             <p className="mb-1" style={{ color: index === 0 ? COLORS.curveA : COLORS.curveB }}>
               Curve {index + 1} control points
             </p>
             {points.map((point, pointIndex) => (
-              <p key={pointIndex} className="text-muted">
+              <p key={pointIndex} className="text-content-3">
                 {'  '}P{pointIndex}: ({point.x.toFixed(2)}, {point.y.toFixed(2)})
               </p>
             ))}
@@ -430,9 +448,9 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
       </div>
 
       {intersections.length > 0 && (
-        <div className="border-t border-ink-700 pt-4">
+        <div className="border-t border-edge pt-4">
           {intersections.map((intersection, index) => (
-            <p key={index} className="text-muted">
+            <p key={index} className="text-content-3">
               <span style={{ color: COLORS.intersection }}>#{index + 1}</span> t=
               {intersection.t.toFixed(6)}, s={intersection.s.toFixed(6)}
             </p>
@@ -446,8 +464,8 @@ function Readout({ result, epsilon, epsilonExponent, curves, onEpsilonChange }: 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-muted">{label}</dt>
-      <dd className="text-white">{value}</dd>
+      <dt className="text-content-3">{label}</dt>
+      <dd className="text-content">{value}</dd>
     </div>
   );
 }
@@ -463,12 +481,12 @@ function ToggleRow({
 }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-3">
-      <span className="text-muted">{label}</span>
+      <span className="text-content-3">{label}</span>
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-ink-600 bg-ink-800 text-primary-500 focus:ring-primary-400 focus:ring-offset-ink-850"
+        className="h-4 w-4 rounded border-content-3 bg-paper-2 text-plot focus:ring-plot focus:ring-offset-paper"
       />
     </label>
   );
@@ -490,7 +508,7 @@ function StepButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="h-6 w-6 rounded border border-ink-700 text-muted transition-colors hover:border-ink-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+      className="h-6 w-6 rounded border border-edge text-content-3 transition-colors hover:border-content-3 hover:text-content disabled:cursor-not-allowed disabled:opacity-30"
     >
       <span className="sr-only">{label}</span>
       <span aria-hidden="true">{glyph}</span>
@@ -523,7 +541,7 @@ function ControlHandle({ point, index, color, label, ...handlers }: ControlHandl
         borderColor: color,
         color,
       }}
-      className="absolute -ml-3 -mt-3 flex h-6 w-6 touch-none items-center justify-center rounded-full border-2 bg-ink-950/80 font-mono text-[10px] leading-none transition-transform hover:scale-125 focus-visible:scale-125"
+      className="absolute -ml-3 -mt-3 flex h-6 w-6 touch-none items-center justify-center rounded-full border-2 bg-card/80 font-mono text-[10px] leading-none transition-transform hover:scale-125 focus-visible:scale-125"
     >
       {index}
     </button>
@@ -532,8 +550,8 @@ function ControlHandle({ point, index, color, label, ...handlers }: ControlHandl
 
 // --- canvas primitives -----------------------------------------------------
 
-function drawGrid(context: CanvasRenderingContext2D, unit: number): void {
-  context.strokeStyle = COLORS.grid;
+function drawGrid(context: CanvasRenderingContext2D, unit: number, gridColor: string): void {
+  context.strokeStyle = gridColor;
   context.lineWidth = unit;
   context.beginPath();
   for (let x = GRID_SPACING; x < LOGICAL_WIDTH; x += GRID_SPACING) {
@@ -582,7 +600,12 @@ function drawCurve(
   context.stroke();
 }
 
-function drawIntersection(context: CanvasRenderingContext2D, point: Point, unit: number): void {
+function drawIntersection(
+  context: CanvasRenderingContext2D,
+  point: Point,
+  unit: number,
+  ringColor: string,
+): void {
   context.save();
   // A halo lifts the marker off whichever curve happens to pass under it.
   context.fillStyle = COLORS.intersection;
@@ -596,7 +619,9 @@ function drawIntersection(context: CanvasRenderingContext2D, point: Point, unit:
   context.arc(point.x, point.y, 4 * unit, 0, Math.PI * 2);
   context.fill();
 
-  context.strokeStyle = '#ffffff';
+  // Ring in the canvas background colour so the dot separates from the curves
+  // on both the light and dark grounds.
+  context.strokeStyle = ringColor;
   context.lineWidth = 1.5 * unit;
   context.beginPath();
   context.arc(point.x, point.y, 4 * unit, 0, Math.PI * 2);
