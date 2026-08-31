@@ -1,0 +1,44 @@
+name: Strava daily run sync
+
+# Pulls new runs from Strava into the portfolio DB once a day by calling the backend's
+# protected sync endpoint. Seeded (hardcoded) rows are never touched — see
+# backend/src/services/strava.ts.
+
+on:
+  schedule:
+    # 04:15 UTC daily. GitHub may delay scheduled runs under load; that's fine because
+    # each sync re-aggregates a trailing window, so a late or skipped day self-heals.
+    - cron: '15 4 * * *'
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync endpoint
+        env:
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          if [ -z "$SYNC_URL" ] || [ -z "$SYNC_SECRET" ]; then
+            echo "SYNC_URL and SYNC_SECRET repo secrets must be set." >&2
+            exit 1
+          fi
+          # Retry a few times: the backend may cold-start (e.g. Render free tier), which
+          # can take up to ~60s on the first request.
+          for attempt in 1 2 3 4 5; do
+            echo "Attempt $attempt..."
+            response=$(curl -sS -m 120 -w "\n%{http_code}" -X POST "$SYNC_URL" \
+              -H "x-sync-secret: $SYNC_SECRET")
+            body=$(echo "$response" | sed '$d')
+            code=$(echo "$response" | tail -n1)
+            echo "HTTP $code"
+            echo "$body"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+            echo "Retrying in 30s..."
+            sleep 30
+          done
+          echo "Sync did not succeed after retries." >&2
+          exit 1

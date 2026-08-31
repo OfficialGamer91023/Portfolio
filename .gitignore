@@ -28,3 +28,7 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Agent skills (installed via npx skills)
+.agents/
+.claude/

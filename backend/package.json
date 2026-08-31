@@ -11,7 +11,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "sync:strava": "ts-node src/scripts/sync-strava.ts",
+    "strava:auth": "ts-node src/scripts/strava-auth.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

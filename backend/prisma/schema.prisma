@@ -41,7 +41,7 @@ model OpenSourceContribution {
   order      Int     @default(0)
 }
 
-/// A single logged run, aggregated per day (source: Samsung Health export).
+/// A single logged run, aggregated per day.
 model Run {
   id      Int     @id @default(autoincrement())
   date    String  @unique // ISO yyyy-mm-dd
@@ -49,10 +49,15 @@ model Run {
   pace    Float // minutes per km
   dur     Float // moving minutes
   speed   Float // km/h
-  hr      Int? // avg bpm, null when the phone did not record it
+  hr      Int? // avg bpm, null when the source did not record it
   elev    Int? // metres of gain, null/0 when unrecorded
   cal     Int?
   note    String?
+  // Provenance. "seed" = the hardcoded initial export (Samsung Health), which the
+  // daily Strava sync must NEVER overwrite. "strava" = a row owned by the sync, safe
+  // to re-aggregate on every run. Default is the protected value on purpose: any row
+  // whose origin we can't vouch for is left untouched by the sync.
+  source  String  @default("seed")
 }
 
 model Experience {

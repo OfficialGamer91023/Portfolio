@@ -38,6 +38,7 @@ export interface RunResponse {
   elev: number | null;
   cal: number | null;
   note: string | null;
+  source: string;
 }
 
 export interface ExperienceResponse {

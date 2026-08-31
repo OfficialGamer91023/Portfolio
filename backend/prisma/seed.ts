@@ -215,6 +215,7 @@ async function seedRuns(): Promise<void> {
     elev: r.elev,
     cal: r.cal,
     note: r.note,
+    source: 'seed', // hardcoded initial data — the Strava sync must never overwrite these
   }));
 
   await prisma.run.createMany({ data: rows });
