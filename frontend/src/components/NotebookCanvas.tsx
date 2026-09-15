@@ -70,6 +70,9 @@ export function NotebookCanvas({
 
     function size(): void {
       const rect = canvas!.getBoundingClientRect();
+      // Before the box is laid out (stylesheet still applying) the rect can be
+      // 0 — skip, the ResizeObserver fires again once the real size lands.
+      if (rect.width === 0 || rect.height === 0) return;
       width = rect.width;
       height = rect.height;
       canvas!.width = width * dpr;
@@ -136,12 +139,22 @@ export function NotebookCanvas({
     size();
     frame();
 
-    function onResize(): void {
+    // The backing store has to be measured at the canvas's FINAL laid-out size.
+    // In a production build the stylesheet (and the `h-[280px]` box height) can
+    // apply a beat after this canvas first mounts, so a one-time mount measurement
+    // may catch a smaller box; the backing store is then CSS-stretched up to the
+    // real size, which reads as a "zoomed-in" graph (fatter curves, bigger dots).
+    // A ResizeObserver re-measures whenever the box actually changes — including
+    // that late layout settle, and any window resize — so the render resolution
+    // always matches the display size.
+    const ro = new ResizeObserver(() => {
       pal = palette();
       size();
+      // The running rAF loop repaints itself at the new size on its next frame;
+      // under reduced motion there is no loop, so redraw the static frame here.
       if (prefersReducedMotion) frame();
-    }
-    window.addEventListener('resize', onResize);
+    });
+    ro.observe(canvas);
 
     // Repaint when the theme flips (data-theme changes on <html>).
     const observer = new MutationObserver(() => {
@@ -152,7 +165,7 @@ export function NotebookCanvas({
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
+      ro.disconnect();
       observer.disconnect();
     };
   }, [dots, speed, phase0, prefersReducedMotion]);

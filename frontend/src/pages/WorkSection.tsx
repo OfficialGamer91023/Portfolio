@@ -15,13 +15,22 @@ export function WorkSection() {
       <div className="mx-auto max-w-[940px] px-6 py-11">
         <span className="section-idx">§ 01</span>
         <Reveal>
-          <h2 className="nb-h2 mb-1">Selected work</h2>
+          <div className="mb-1 flex items-baseline justify-between gap-4">
+            <h2 className="nb-h2">Selected work</h2>
+            {cases.length > 0 && (
+              <span className="section-lbl shrink-0" style={{ color: 'var(--ink-3)' }}>
+                {cases.length} cases · scroll ↓
+              </span>
+            )}
+          </div>
           <p className="mb-6 font-mono text-sm text-content-3">
             problem → method → <span className="text-verify">verification</span>
           </p>
         </Reveal>
 
-        <div className="space-y-[18px]">
+        {/* Fixed-height, scrollable stack — mirrors the open-source ledger below, so
+            the section stays compact as the case list grows. */}
+        <div className="max-h-[600px] space-y-[18px] overflow-y-auto pr-1">
           {projectsLoading && cases.length === 0
             ? [0, 1, 2].map((i) => <CaseSkeleton key={i} />)
             : cases.map((project, i) => (

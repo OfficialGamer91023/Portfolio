@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function seedExperience(): Promise<void> {
+  await prisma.experience.deleteMany();
   const experiences = [
     {
       company: 'Google Summer of Code',
@@ -63,6 +64,7 @@ async function seedExperience(): Promise<void> {
 }
 
 async function seedProjects(): Promise<void> {
+  await prisma.project.deleteMany();
   // The "verified notebook" work cases: problem -> method -> verified.
   const projects = [
     {
@@ -113,6 +115,23 @@ async function seedProjects(): Promise<void> {
       featured: true,
       order: 2,
     },
+    {
+      title: 'Fieldwork — adaptive voice user-interviews',
+      subtitle: 'Python · FastAPI · AssemblyAI streaming STT · LLM interviewer · AssemblyAI Voice Agent Hackathon',
+      figNo: 'fig.06',
+      description:
+        'Automated, adaptive voice interviews for founders: it asks follow-ups instead of reading a script, then synthesizes ranked themes across every interview.',
+      problem:
+        'User research does not scale: a founder cannot run and synthesize dozens of adaptive voice interviews by hand.',
+      method:
+        'A deliberate three-plane split (control · latency-critical real-time · async fan-out). Phase 0 closes the live loop: browser mic → AssemblyAI streaming STT → LLM interviewer → browser TTS, with per-connection history driving the follow-ups.',
+      verified:
+        'Phase 0 runs end-to-end locally: the interviewer holds a conversation and asks adaptive multi-turn follow-ups over a full mic → STT → LLM → TTS loop.',
+      tags: ['Python', 'FastAPI', 'AssemblyAI STT', 'WebSockets', 'asyncio', 'voice agent'],
+      githubUrl: '#',
+      featured: true,
+      order: 3,
+    },
   ];
 
   for (const project of projects) {
@@ -122,6 +141,7 @@ async function seedProjects(): Promise<void> {
 }
 
 async function seedContributions(): Promise<void> {
+  await prisma.openSourceContribution.deleteMany();
   // The open-source ledger — every row is a real, linkable contribution.
   // statusKind 'verify' = merged (green check), 'plot' = still in review (orange).
   const contributions = [
@@ -198,6 +218,9 @@ async function seedContributions(): Promise<void> {
 }
 
 async function seedRuns(): Promise<void> {
+  // Only clear the rows this seed owns — never the Strava-synced runs, which
+  // carry a different `source` and must survive a re-seed.
+  await prisma.run.deleteMany({ where: { source: 'seed' } });
   // Real training data: Samsung Health export, aggregated per day.
   // pace = min/km, dur = moving minutes, speed = km/h; hr/elev null when unrecorded.
   const RUN: Record<
@@ -223,6 +246,7 @@ async function seedRuns(): Promise<void> {
 }
 
 async function seedSkills(): Promise<void> {
+  await prisma.skill.deleteMany();
   const skillsByCategory: Record<string, string[]> = {
     Languages: ['C++', 'JavaScript', 'TypeScript', 'Python', 'Java'],
     Frontend: ['React', 'Next.js', 'Tailwind CSS', 'HTML5/CSS3'],
@@ -243,22 +267,44 @@ async function seedSkills(): Promise<void> {
   console.log(`Seeded ${count} skills`);
 }
 
+// Each seeder now clears only its own table, so a single table can be re-seeded
+// in isolation without touching the others. Run one or more targets with, e.g.:
+//   npm run prisma:seed -- projects
+//   npm run prisma:seed -- projects contributions
+// With no target, every table is seeded (the original full-reset behaviour).
+const seeders: Record<string, () => Promise<void>> = {
+  experience: seedExperience,
+  projects: seedProjects,
+  skills: seedSkills,
+  contributions: seedContributions,
+  runs: seedRuns,
+};
+
 async function main(): Promise<void> {
-  console.log('Starting database seed...');
+  const targets = process.argv.slice(2).filter((arg) => !arg.startsWith('-'));
 
-  // Clear existing data to allow re-seeding
-  await prisma.contactSubmission.deleteMany();
-  await prisma.skill.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.experience.deleteMany();
-  await prisma.openSourceContribution.deleteMany();
-  await prisma.run.deleteMany();
+  const unknown = targets.filter((t) => !(t in seeders));
+  if (unknown.length > 0) {
+    console.error(
+      `Unknown seed target(s): ${unknown.join(', ')}. ` +
+        `Valid targets: ${Object.keys(seeders).join(', ')}`
+    );
+    process.exit(1);
+  }
 
-  await seedExperience();
-  await seedProjects();
-  await seedSkills();
-  await seedContributions();
-  await seedRuns();
+  if (targets.length === 0) {
+    console.log('Starting full database seed...');
+    // contactSubmission has no seeder of its own; clear it as part of a full reset.
+    await prisma.contactSubmission.deleteMany();
+    for (const seed of Object.values(seeders)) {
+      await seed();
+    }
+  } else {
+    console.log(`Seeding: ${targets.join(', ')}`);
+    for (const target of targets) {
+      await seeders[target]();
+    }
+  }
 
   console.log('Database seeded successfully!');
 }
