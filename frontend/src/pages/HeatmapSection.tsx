@@ -94,7 +94,7 @@ export function HeatmapSection() {
       <div className="mx-auto max-w-[940px] px-6 py-11">
         <span className="section-idx">§ 05</span>
         <Reveal>
-          <span className="section-lbl plot">interactive · from Samsung Health</span>
+          <span className="section-lbl plot">interactive · from Strava</span>
           <h2 className="nb-h2 mt-1.5">Training log</h2>
           <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-content-2">
             Every run, plotted. <b className="text-content">3–4 a week</b>, building toward the next
