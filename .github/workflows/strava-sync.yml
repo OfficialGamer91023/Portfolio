@@ -6,9 +6,10 @@ name: Strava daily run sync
 
 on:
   schedule:
-    # 04:15 UTC daily. GitHub may delay scheduled runs under load; that's fine because
+    # 18:00 UTC = 23:00 PKT daily, a few hours after the usual evening run so it lands
+    # the same day. GitHub may delay scheduled runs under load; that's fine because
     # each sync re-aggregates a trailing window, so a late or skipped day self-heals.
-    - cron: '15 4 * * *'
+    - cron: '0 18 * * *'
   workflow_dispatch: {} # allow manual runs from the Actions tab
 
 jobs:
