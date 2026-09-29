@@ -117,18 +117,18 @@ async function seedProjects(): Promise<void> {
     },
     {
       title: 'Fieldwork — adaptive voice user-interviews',
-      subtitle: 'Python · FastAPI · AssemblyAI streaming STT · LLM interviewer · AssemblyAI Voice Agent Hackathon',
+      subtitle: 'Python · FastAPI · AssemblyAI Universal-3 Streaming · AWS Fargate + Lambda · Terraform · AssemblyAI Voice Agent Hackathon',
       figNo: 'fig.06',
       description:
-        'Automated, adaptive voice interviews for founders: it asks follow-ups instead of reading a script, then synthesizes ranked themes across every interview.',
+        'Voice user interviews that synthesize themselves: one link, a real spoken conversation with an AI interviewer, then ranked themes backed by verbatim quotes.',
       problem:
-        'User research does not scale: a founder cannot run and synthesize dozens of adaptive voice interviews by hand.',
+        'User research does not scale: a founder cannot run dozens of adaptive voice interviews by hand, then turn fifty transcripts into findings they can trust.',
       method:
-        'A deliberate three-plane split (control · latency-critical real-time · async fan-out). Phase 0 closes the live loop: browser mic → AssemblyAI streaming STT → LLM interviewer → browser TTS, with per-connection history driving the follow-ups.',
+        'Three planes on AWS. A Fargate orchestrator runs the live call (AssemblyAI end-of-turn → streamed LLM → Polly, with barge-in and goal-driven endings); SQS → Lambda extracts quotes per interview and ranks themes across all of them.',
       verified:
-        'Phase 0 runs end-to-end locally: the interviewer holds a conversation and asks adaptive multi-turn follow-ups over a full mic → STT → LLM → TTS loop.',
-      tags: ['Python', 'FastAPI', 'AssemblyAI STT', 'WebSockets', 'asyncio', 'voice agent'],
-      githubUrl: '#',
+        'Deployed end-to-end with Terraform. About 1–2 s from end-of-turn to first audio; every quote is checked in code against the stored transcript and deep-links to its line.',
+      tags: ['Python', 'FastAPI', 'AssemblyAI streaming', 'AWS Fargate', 'Lambda + SQS', 'DynamoDB', 'Terraform', 'Next.js'],
+      githubUrl: 'https://github.com/OfficialGamer91023/FieldWork',
       featured: true,
       order: 3,
     },
